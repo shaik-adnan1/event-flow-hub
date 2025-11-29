@@ -1,49 +1,39 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-
-type UserRole = "admin" | "event-manager" | "stakeholder";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole | "">("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    if (!role) {
-      toast.error("Please select your role");
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setIsLoading(false);
       return;
     }
 
-    if (!email || !password) {
-      toast.error("Please enter email and password");
-      return;
-    }
-
-    // Store role in sessionStorage for demo purposes
-    sessionStorage.setItem("userRole", role);
-    
     toast.success("Login successful!");
-    
-    // Navigate to appropriate dashboard
-    switch (role) {
-      case "admin":
-        navigate("/admin");
-        break;
-      case "event-manager":
-        navigate("/event-manager");
-        break;
-      case "stakeholder":
-        navigate("/stakeholder");
-        break;
-    }
+    navigate("/admin");
+    setIsLoading(false);
   };
 
   return (
@@ -58,62 +48,43 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium mb-2 text-foreground">
-                Select Role
-              </label>
-              <Select value={role} onValueChange={(value) => setRole(value as UserRole)}>
-                <SelectTrigger id="role">
-                  <SelectValue placeholder="Choose your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="event-manager">Event Manager</SelectItem>
-                  <SelectItem value="stakeholder">Stakeholder/Vendor/Worker</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-2 text-foreground">
-                Email
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-input rounded-md bg-background text-foreground"
                 placeholder="your.email@example.com"
                 required
               />
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-2 text-foreground">
-                Password
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-input rounded-md bg-background text-foreground"
                 placeholder="••••••••"
                 required
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Sign In
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
-
-            <div className="text-center text-sm text-muted-foreground">
-              <button type="button" className="hover:text-primary">
-                Forgot password?
-              </button>
-            </div>
           </form>
+
+          <div className="mt-4 text-center text-sm">
+            Don't have an account?{" "}
+            <Button
+              variant="link"
+              className="p-0"
+              onClick={() => navigate("/signup")}
+            >
+              Sign up
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
