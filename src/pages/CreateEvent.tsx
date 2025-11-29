@@ -1,0 +1,192 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+
+const CreateEvent = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const eventData = {
+      name: formData.get("name"),
+      type: formData.get("type"),
+      date: formData.get("date"),
+      time: formData.get("time"),
+      venue: formData.get("venue"),
+      attendeeCount: formData.get("attendeeCount"),
+      manager: formData.get("manager"),
+      description: formData.get("description"),
+    };
+
+    // Simulate API call
+    setTimeout(() => {
+      toast({
+        title: "Event created successfully",
+        description: `${eventData.name} has been added to your events.`,
+      });
+      setIsSubmitting(false);
+      navigate("/admin");
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border">
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Calendar className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-bold text-foreground">Create New Event</h1>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <Card>
+          <CardHeader>
+            <CardTitle>Event Details</CardTitle>
+            <CardDescription>Fill in the information below to create a new event</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Event Name */}
+              <div className="space-y-2">
+                <Label htmlFor="name">Event Name *</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  placeholder="e.g., Annual Conference 2025"
+                  required
+                />
+              </div>
+
+              {/* Event Type */}
+              <div className="space-y-2">
+                <Label htmlFor="type">Event Type *</Label>
+                <Select name="type" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select event type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="conference">Conference</SelectItem>
+                    <SelectItem value="workshop">Workshop</SelectItem>
+                    <SelectItem value="seminar">Seminar</SelectItem>
+                    <SelectItem value="product-launch">Product Launch</SelectItem>
+                    <SelectItem value="team-building">Team Building</SelectItem>
+                    <SelectItem value="corporate-event">Corporate Event</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date and Time */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date">Event Date *</Label>
+                  <Input
+                    id="date"
+                    name="date"
+                    type="date"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="time">Event Time *</Label>
+                  <Input
+                    id="time"
+                    name="time"
+                    type="time"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Venue */}
+              <div className="space-y-2">
+                <Label htmlFor="venue">Venue *</Label>
+                <Input
+                  id="venue"
+                  name="venue"
+                  placeholder="e.g., Grand Ballroom, City Convention Center"
+                  required
+                />
+              </div>
+
+              {/* Attendee Count */}
+              <div className="space-y-2">
+                <Label htmlFor="attendeeCount">Expected Attendees *</Label>
+                <Input
+                  id="attendeeCount"
+                  name="attendeeCount"
+                  type="number"
+                  min="1"
+                  placeholder="e.g., 150"
+                  required
+                />
+              </div>
+
+              {/* Event Manager */}
+              <div className="space-y-2">
+                <Label htmlFor="manager">Assign Event Manager</Label>
+                <Select name="manager">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select event manager (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Leave Unassigned</SelectItem>
+                    <SelectItem value="sarah-johnson">Sarah Johnson</SelectItem>
+                    <SelectItem value="mike-chen">Mike Chen</SelectItem>
+                    <SelectItem value="admin">Assign to Self</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Event Description</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Provide additional details about the event..."
+                  rows={4}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-4">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating..." : "Create Event"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/admin")}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default CreateEvent;

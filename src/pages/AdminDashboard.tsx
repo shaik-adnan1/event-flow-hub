@@ -72,7 +72,7 @@ const AdminDashboard = () => {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-4 mb-8">
-          <Button>
+          <Button onClick={() => navigate("/admin/create-event")}>
             <Plus className="h-4 w-4 mr-2" />
             Create Event
           </Button>
