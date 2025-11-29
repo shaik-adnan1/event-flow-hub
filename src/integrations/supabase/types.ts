@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          assigned_manager_id: string | null
+          attendee_count: number
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          time: string
+          type: string
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          assigned_manager_id?: string | null
+          attendee_count: number
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          name: string
+          status?: string
+          time: string
+          type: string
+          updated_at?: string
+          venue: string
+        }
+        Update: {
+          assigned_manager_id?: string | null
+          attendee_count?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          time?: string
+          type?: string
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
