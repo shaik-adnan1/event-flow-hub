@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -19,26 +20,34 @@ const CreateEvent = () => {
     setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
-    const eventData = {
-      name: formData.get("name"),
-      type: formData.get("type"),
-      date: formData.get("date"),
-      time: formData.get("time"),
-      venue: formData.get("venue"),
-      attendeeCount: formData.get("attendeeCount"),
-      manager: formData.get("manager"),
-      description: formData.get("description"),
-    };
+    
+    const { error } = await supabase.from("events").insert({
+      name: formData.get("name") as string,
+      type: formData.get("type") as string,
+      date: formData.get("date") as string,
+      time: formData.get("time") as string,
+      venue: formData.get("venue") as string,
+      attendee_count: parseInt(formData.get("attendeeCount") as string),
+      description: formData.get("description") as string || null,
+      status: "pending",
+    });
 
-    // Simulate API call
-    setTimeout(() => {
+    if (error) {
       toast({
-        title: "Event created successfully",
-        description: `${eventData.name} has been added to your events.`,
+        title: "Error creating event",
+        description: error.message,
+        variant: "destructive",
       });
       setIsSubmitting(false);
-      navigate("/admin");
-    }, 1000);
+      return;
+    }
+
+    toast({
+      title: "Event created successfully",
+      description: `${formData.get("name")} has been added to your events.`,
+    });
+    setIsSubmitting(false);
+    navigate("/admin");
   };
 
   return (
@@ -140,21 +149,6 @@ const CreateEvent = () => {
                 />
               </div>
 
-              {/* Event Manager */}
-              <div className="space-y-2">
-                <Label htmlFor="manager">Assign Event Manager</Label>
-                <Select name="manager">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select event manager (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Leave Unassigned</SelectItem>
-                    <SelectItem value="sarah-johnson">Sarah Johnson</SelectItem>
-                    <SelectItem value="mike-chen">Mike Chen</SelectItem>
-                    <SelectItem value="admin">Assign to Self</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* Description */}
               <div className="space-y-2">
