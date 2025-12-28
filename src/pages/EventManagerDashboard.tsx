@@ -1,27 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, Clock, AlertCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useEvents } from "@/hooks/useEvents";
 
 const EventManagerDashboard = () => {
   const navigate = useNavigate();
-  const [tasks] = useState([
-    { id: 1, title: "Set up venue decorations", event: "Annual Conference 2025", dueDate: "2025-03-10", status: "not-started", assignee: "John Doe" },
-    { id: 2, title: "Coordinate catering service", event: "Annual Conference 2025", dueDate: "2025-03-12", status: "in-progress", assignee: "Jane Smith" },
-    { id: 3, title: "Prepare presentation materials", event: "Product Launch Event", dueDate: "2025-04-15", status: "completed", assignee: "Mike Wilson" },
-    { id: 4, title: "Book audio-visual equipment", event: "Product Launch Event", dueDate: "2025-04-18", status: "in-progress", assignee: "Sarah Lee" },
-  ]);
+  const { user, role, isLoading: authLoading } = useAuth();
+  const { data: events, isLoading: eventsLoading } = useEvents();
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("userRole");
+  // Protect route - only managers allowed
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        navigate("/login");
+      } else if (role && role !== "manager") {
+        if (role === "admin") navigate("/admin");
+        else if (role === "stakeholder") navigate("/stakeholder");
+      }
+    }
+  }, [user, role, authLoading, navigate]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate("/login");
   };
 
+  // Filter events assigned to this manager
+  const myEvents = events?.filter(e => e.assigned_manager_id === user?.id) || [];
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "not-started":
+      case "pending":
         return <AlertCircle className="h-5 w-5 text-muted-foreground" />;
       case "in-progress":
         return <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />;
@@ -34,7 +48,7 @@ const EventManagerDashboard = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "not-started":
+      case "pending":
         return "bg-muted text-muted-foreground";
       case "in-progress":
         return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
@@ -45,12 +59,20 @@ const EventManagerDashboard = () => {
     }
   };
 
-  const taskStats = {
-    total: tasks.length,
-    completed: tasks.filter(t => t.status === "completed").length,
-    inProgress: tasks.filter(t => t.status === "in-progress").length,
-    notStarted: tasks.filter(t => t.status === "not-started").length,
+  const eventStats = {
+    total: myEvents.length,
+    completed: myEvents.filter(e => e.status === "completed").length,
+    inProgress: myEvents.filter(e => e.status === "in-progress").length,
+    pending: myEvents.filter(e => e.status === "pending").length,
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,6 +82,7 @@ const EventManagerDashboard = () => {
           <div className="flex items-center gap-2">
             <Calendar className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold text-foreground">Event Manager Dashboard</h1>
+            <Badge variant="secondary" className="ml-2">Manager</Badge>
           </div>
           <Button variant="outline" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
@@ -73,68 +96,80 @@ const EventManagerDashboard = () => {
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">{taskStats.total}</CardTitle>
-              <CardDescription>Total Tasks</CardDescription>
+              <CardTitle className="text-2xl">{eventStats.total}</CardTitle>
+              <CardDescription>Total Events</CardDescription>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl text-green-600 dark:text-green-400">{taskStats.completed}</CardTitle>
+              <CardTitle className="text-2xl text-green-600 dark:text-green-400">{eventStats.completed}</CardTitle>
               <CardDescription>Completed</CardDescription>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl text-yellow-600 dark:text-yellow-400">{taskStats.inProgress}</CardTitle>
+              <CardTitle className="text-2xl text-yellow-600 dark:text-yellow-400">{eventStats.inProgress}</CardTitle>
               <CardDescription>In Progress</CardDescription>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">{taskStats.notStarted}</CardTitle>
-              <CardDescription>Not Started</CardDescription>
+              <CardTitle className="text-2xl">{eventStats.pending}</CardTitle>
+              <CardDescription>Pending</CardDescription>
             </CardHeader>
           </Card>
         </div>
 
-        {/* Task Management */}
+        {/* Event Management */}
         <Card>
           <CardHeader>
-            <CardTitle>Task Overview</CardTitle>
-            <CardDescription>Monitor and manage all assigned tasks</CardDescription>
+            <CardTitle>My Assigned Events</CardTitle>
+            <CardDescription>Events assigned to you for management</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex items-start gap-4 p-4 border border-border rounded-lg hover:bg-accent transition-colors"
-                >
-                  <div className="pt-1">
-                    {getStatusIcon(task.status)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold text-foreground">{task.title}</h3>
-                        <p className="text-sm text-muted-foreground">{task.event}</p>
+            {eventsLoading ? (
+              <p className="text-muted-foreground">Loading events...</p>
+            ) : myEvents.length > 0 ? (
+              <div className="space-y-4">
+                {myEvents.map((event) => (
+                  <div
+                    key={event.id}
+                    className="flex items-start gap-4 p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <div className="pt-1">
+                      {getStatusIcon(event.status)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold text-foreground">{event.name}</h3>
+                          <p className="text-sm text-muted-foreground">{event.type}</p>
+                        </div>
+                        <Badge className={getStatusColor(event.status)}>
+                          {event.status.replace("-", " ")}
+                        </Badge>
                       </div>
-                      <Badge className={getStatusColor(task.status)}>
-                        {task.status.replace("-", " ")}
-                      </Badge>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>📍 {event.venue}</span>
+                        <span>•</span>
+                        <span>
+                          {new Date(event.date).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>Assigned to: {task.assignee}</span>
-                      <span>•</span>
-                      <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
-                    </div>
+                    <Button variant="outline" size="sm">
+                      Manage
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Manage
-                  </Button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No events assigned to you yet.</p>
+            )}
           </CardContent>
         </Card>
       </div>

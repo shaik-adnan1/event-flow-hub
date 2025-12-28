@@ -9,11 +9,14 @@ import { Calendar, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useManagers } from "@/hooks/useManagers";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedManager, setSelectedManager] = useState<string>("");
+  const { data: managers, isLoading: managersLoading } = useManagers();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,6 +33,7 @@ const CreateEvent = () => {
       attendee_count: parseInt(formData.get("attendeeCount") as string),
       description: formData.get("description") as string || null,
       status: "pending",
+      assigned_manager_id: selectedManager || null,
     });
 
     if (error) {
@@ -103,6 +107,24 @@ const CreateEvent = () => {
                 </Select>
               </div>
 
+              {/* Assign Event Manager */}
+              <div className="space-y-2">
+                <Label htmlFor="manager">Assign Event Manager</Label>
+                <Select value={selectedManager} onValueChange={setSelectedManager}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={managersLoading ? "Loading managers..." : "Select event manager"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No manager assigned</SelectItem>
+                    {managers?.map((manager) => (
+                      <SelectItem key={manager.user_id} value={manager.user_id}>
+                        {manager.full_name || manager.email || "Unknown Manager"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Date and Time */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -148,7 +170,6 @@ const CreateEvent = () => {
                   required
                 />
               </div>
-
 
               {/* Description */}
               <div className="space-y-2">

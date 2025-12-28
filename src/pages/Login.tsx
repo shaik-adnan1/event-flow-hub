@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,10 +7,35 @@ import { Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { user, role, isLoading: authLoading } = useAuth();
+
+  // Redirect based on role when authenticated
+  useEffect(() => {
+    if (!authLoading && user && role) {
+      redirectBasedOnRole(role);
+    }
+  }, [user, role, authLoading]);
+
+  const redirectBasedOnRole = (userRole: string) => {
+    switch (userRole) {
+      case "admin":
+        navigate("/admin");
+        break;
+      case "manager":
+        navigate("/event-manager");
+        break;
+      case "stakeholder":
+        navigate("/stakeholder");
+        break;
+      default:
+        navigate("/");
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,7 +45,7 @@ const Login = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -31,8 +56,22 @@ const Login = () => {
       return;
     }
 
-    toast.success("Login successful!");
-    navigate("/admin");
+    // Fetch user role and redirect
+    if (data.user) {
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id)
+        .single();
+
+      if (roleData) {
+        toast.success("Login successful!");
+        redirectBasedOnRole(roleData.role);
+      } else {
+        toast.error("No role assigned. Please contact admin.");
+      }
+    }
+
     setIsLoading(false);
   };
 
