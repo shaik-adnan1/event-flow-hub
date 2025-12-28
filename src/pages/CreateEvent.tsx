@@ -33,7 +33,7 @@ const CreateEvent = () => {
       attendee_count: parseInt(formData.get("attendeeCount") as string),
       description: formData.get("description") as string || null,
       status: "pending",
-      assigned_manager_id: selectedManager || null,
+      assigned_manager_id: selectedManager === "none" ? null : selectedManager || null,
     });
 
     if (error) {
@@ -115,7 +115,7 @@ const CreateEvent = () => {
                     <SelectValue placeholder={managersLoading ? "Loading managers..." : "Select event manager"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No manager assigned</SelectItem>
+                    <SelectItem value="none">No manager assigned</SelectItem>
                     {managers?.map((manager) => (
                       <SelectItem key={manager.user_id} value={manager.user_id}>
                         {manager.full_name || manager.email || "Unknown Manager"}
