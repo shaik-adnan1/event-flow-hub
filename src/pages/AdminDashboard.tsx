@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,10 +6,25 @@ import { Calendar, Plus, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEvents } from "@/hooks/useEvents";
+import { useAuth } from "@/hooks/useAuth";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { data: events, isLoading } = useEvents();
+  const { user, role, isLoading: authLoading } = useAuth();
+
+  // Protect route - only admins allowed
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        navigate("/login");
+      } else if (role && role !== "admin") {
+        // Redirect to appropriate dashboard based on role
+        if (role === "manager") navigate("/event-manager");
+        else if (role === "stakeholder") navigate("/stakeholder");
+      }
+    }
+  }, [user, role, authLoading, navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -28,6 +44,14 @@ const AdminDashboard = () => {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -36,6 +60,7 @@ const AdminDashboard = () => {
           <div className="flex items-center gap-2">
             <Calendar className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold text-foreground">EventFlow Admin</h1>
+            <Badge variant="secondary" className="ml-2">Admin</Badge>
           </div>
           <Button variant="outline" onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
