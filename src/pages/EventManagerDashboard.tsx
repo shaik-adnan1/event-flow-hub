@@ -1,34 +1,68 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, Clock, AlertCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import ManageEventDialog from "@/components/ManageEventDialog";
+
+interface Event {
+  id: string;
+  name: string;
+  type: string;
+  date: string;
+  time?: string;
+  venue: string;
+  status: string;
+  assignedBy?: string;
+  attendeeCount?: number;
+}
 
 // Mock events assigned to this manager
-const mockMyEvents = [
+const initialEvents: Event[] = [
   {
     id: "1",
     name: "Annual Tech Conference",
     type: "Corporate",
     date: "2025-02-15",
+    time: "09:00",
     venue: "Convention Center",
     status: "pending",
+    assignedBy: "Admin User",
+    attendeeCount: 500,
   },
   {
     id: "2",
     name: "Product Launch Event",
     type: "Public",
     date: "2025-03-01",
+    time: "14:00",
     venue: "Grand Hotel Ballroom",
     status: "in-progress",
+    assignedBy: "Admin User",
+    attendeeCount: 200,
   },
 ];
 
 const EventManagerDashboard = () => {
   const navigate = useNavigate();
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [manageDialogOpen, setManageDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const handleLogout = () => {
     navigate("/login");
+  };
+
+  const handleManageEvent = (event: Event) => {
+    setSelectedEvent(event);
+    setManageDialogOpen(true);
+  };
+
+  const handleEventUpdate = (eventId: string, status: string) => {
+    setEvents(events.map(e => 
+      e.id === eventId ? { ...e, status } : e
+    ));
   };
 
   const getStatusIcon = (status: string) => {
@@ -58,10 +92,10 @@ const EventManagerDashboard = () => {
   };
 
   const eventStats = {
-    total: mockMyEvents.length,
-    completed: mockMyEvents.filter(e => e.status === "completed").length,
-    inProgress: mockMyEvents.filter(e => e.status === "in-progress").length,
-    pending: mockMyEvents.filter(e => e.status === "pending").length,
+    total: events.length,
+    completed: events.filter(e => e.status === "completed").length,
+    inProgress: events.filter(e => e.status === "in-progress").length,
+    pending: events.filter(e => e.status === "pending").length,
   };
 
   return (
@@ -117,9 +151,9 @@ const EventManagerDashboard = () => {
             <CardDescription>Events assigned to you for management</CardDescription>
           </CardHeader>
           <CardContent>
-            {mockMyEvents.length > 0 ? (
+            {events.length > 0 ? (
               <div className="space-y-4">
-                {mockMyEvents.map((event) => (
+                {events.map((event) => (
                   <div
                     key={event.id}
                     className="flex items-start gap-4 p-4 border border-border rounded-lg hover:bg-accent transition-colors"
@@ -149,7 +183,7 @@ const EventManagerDashboard = () => {
                         </span>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleManageEvent(event)}>
                       Manage
                     </Button>
                   </div>
@@ -161,6 +195,16 @@ const EventManagerDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Manage Event Dialog */}
+      {selectedEvent && (
+        <ManageEventDialog
+          event={selectedEvent}
+          open={manageDialogOpen}
+          onOpenChange={setManageDialogOpen}
+          onEventUpdate={handleEventUpdate}
+        />
+      )}
     </div>
   );
 };

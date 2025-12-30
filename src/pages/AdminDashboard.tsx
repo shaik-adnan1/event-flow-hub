@@ -1,40 +1,103 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, LogOut } from "lucide-react";
+import { Calendar, LogOut, Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import CreateEventDialog from "@/components/CreateEventDialog";
+import ManageManagersDialog from "@/components/ManageManagersDialog";
+import EditEventDialog from "@/components/EditEventDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface Event {
+  id: string;
+  name: string;
+  type: string;
+  date: string;
+  time?: string;
+  venue: string;
+  status: string;
+  description?: string;
+  attendeeCount?: number;
+  assignedManagerId?: string;
+}
 
 // Mock events data
-const mockEvents = [
+const initialEvents: Event[] = [
   {
     id: "1",
     name: "Annual Tech Conference",
+    type: "Corporate",
     date: "2025-02-15",
+    time: "09:00",
     venue: "Convention Center",
     status: "pending",
+    attendeeCount: 500,
   },
   {
     id: "2",
     name: "Product Launch Event",
+    type: "Public",
     date: "2025-03-01",
+    time: "14:00",
     venue: "Grand Hotel Ballroom",
     status: "in-progress",
+    attendeeCount: 200,
   },
   {
     id: "3",
     name: "Team Building Retreat",
+    type: "Private",
     date: "2025-01-20",
+    time: "10:00",
     venue: "Mountain Resort",
     status: "completed",
+    attendeeCount: 50,
   },
 ];
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const handleLogout = () => {
     navigate("/login");
+  };
+
+  const handleEdit = (event: Event) => {
+    setSelectedEvent(event);
+    setEditDialogOpen(true);
+  };
+
+  const handleDelete = (event: Event) => {
+    setSelectedEvent(event);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (selectedEvent) {
+      setEvents(events.filter(e => e.id !== selectedEvent.id));
+      toast.success(`Event "${selectedEvent.name}" deleted`);
+    }
+    setDeleteDialogOpen(false);
+    setSelectedEvent(null);
+  };
+
+  const handleEventUpdated = (updatedEvent: Event) => {
+    setEvents(events.map(e => e.id === updatedEvent.id ? updatedEvent : e));
   };
 
   const getStatusColor = (status: string) => {
@@ -72,13 +135,13 @@ const AdminDashboard = () => {
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">{mockEvents.length}</CardTitle>
+              <CardTitle className="text-2xl">{events.length}</CardTitle>
               <CardDescription>Total Events</CardDescription>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">{mockEvents.filter(e => e.status === 'completed').length}</CardTitle>
+              <CardTitle className="text-2xl">{events.filter(e => e.status === 'completed').length}</CardTitle>
               <CardDescription>Completed Events</CardDescription>
             </CardHeader>
           </Card>
@@ -87,6 +150,7 @@ const AdminDashboard = () => {
         {/* Actions */}
         <div className="flex flex-wrap gap-4 mb-8">
           <CreateEventDialog />
+          <ManageManagersDialog />
         </div>
 
         {/* Events Table */}
@@ -97,7 +161,7 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {mockEvents.map((event) => (
+              {events.map((event) => (
                 <div
                   key={event.id}
                   className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
@@ -110,18 +174,51 @@ const AdminDashboard = () => {
                         month: "long",
                         day: "numeric",
                       })}
+                      {event.time && ` at ${event.time}`}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">📍 {event.venue}</p>
                   </div>
-                  <Badge className={getStatusColor(event.status)}>
-                    {event.status.replace("-", " ")}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(event.status)}>
+                      {event.status.replace("-", " ")}
+                    </Badge>
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(event)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(event)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit Event Dialog */}
+      <EditEventDialog
+        event={selectedEvent}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onEventUpdated={handleEventUpdated}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{selectedEvent?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
