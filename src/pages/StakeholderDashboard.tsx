@@ -1,33 +1,35 @@
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useEvents } from "@/hooks/useEvents";
+
+// Mock events visible to stakeholders
+const mockEvents = [
+  {
+    id: "1",
+    name: "Annual Tech Conference",
+    type: "Corporate",
+    date: "2025-02-15",
+    venue: "Convention Center",
+    status: "pending",
+    attendee_count: 500,
+  },
+  {
+    id: "2",
+    name: "Product Launch Event",
+    type: "Public",
+    date: "2025-03-01",
+    venue: "Grand Hotel Ballroom",
+    status: "in-progress",
+    attendee_count: 200,
+  },
+];
 
 const StakeholderDashboard = () => {
   const navigate = useNavigate();
-  const { user, role, isLoading: authLoading } = useAuth();
-  const { data: events, isLoading: eventsLoading } = useEvents();
 
-  // Protect route - only stakeholders allowed
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/login");
-      } else if (role && role !== "stakeholder") {
-        if (role === "admin") navigate("/admin");
-        else if (role === "manager") navigate("/event-manager");
-      }
-    }
-  }, [user, role, authLoading, navigate]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     navigate("/login");
   };
 
@@ -43,14 +45,6 @@ const StakeholderDashboard = () => {
         return "secondary";
     }
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -76,11 +70,9 @@ const StakeholderDashboard = () => {
             <CardDescription>View upcoming and past events</CardDescription>
           </CardHeader>
           <CardContent>
-            {eventsLoading ? (
-              <p className="text-muted-foreground">Loading events...</p>
-            ) : events && events.length > 0 ? (
+            {mockEvents.length > 0 ? (
               <div className="space-y-4">
-                {events.map((event) => (
+                {mockEvents.map((event) => (
                   <div
                     key={event.id}
                     className="p-4 border border-border rounded-lg"
