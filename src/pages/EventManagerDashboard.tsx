@@ -1,37 +1,35 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, Clock, AlertCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useEvents } from "@/hooks/useEvents";
+
+// Mock events assigned to this manager
+const mockMyEvents = [
+  {
+    id: "1",
+    name: "Annual Tech Conference",
+    type: "Corporate",
+    date: "2025-02-15",
+    venue: "Convention Center",
+    status: "pending",
+  },
+  {
+    id: "2",
+    name: "Product Launch Event",
+    type: "Public",
+    date: "2025-03-01",
+    venue: "Grand Hotel Ballroom",
+    status: "in-progress",
+  },
+];
 
 const EventManagerDashboard = () => {
   const navigate = useNavigate();
-  const { user, role, isLoading: authLoading } = useAuth();
-  const { data: events, isLoading: eventsLoading } = useEvents();
 
-  // Protect route - only managers allowed
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/login");
-      } else if (role && role !== "manager") {
-        if (role === "admin") navigate("/admin");
-        else if (role === "stakeholder") navigate("/stakeholder");
-      }
-    }
-  }, [user, role, authLoading, navigate]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     navigate("/login");
   };
-
-  // Filter events assigned to this manager
-  const myEvents = events?.filter(e => e.assigned_manager_id === user?.id) || [];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -60,19 +58,11 @@ const EventManagerDashboard = () => {
   };
 
   const eventStats = {
-    total: myEvents.length,
-    completed: myEvents.filter(e => e.status === "completed").length,
-    inProgress: myEvents.filter(e => e.status === "in-progress").length,
-    pending: myEvents.filter(e => e.status === "pending").length,
+    total: mockMyEvents.length,
+    completed: mockMyEvents.filter(e => e.status === "completed").length,
+    inProgress: mockMyEvents.filter(e => e.status === "in-progress").length,
+    pending: mockMyEvents.filter(e => e.status === "pending").length,
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,11 +117,9 @@ const EventManagerDashboard = () => {
             <CardDescription>Events assigned to you for management</CardDescription>
           </CardHeader>
           <CardContent>
-            {eventsLoading ? (
-              <p className="text-muted-foreground">Loading events...</p>
-            ) : myEvents.length > 0 ? (
+            {mockMyEvents.length > 0 ? (
               <div className="space-y-4">
-                {myEvents.map((event) => (
+                {mockMyEvents.map((event) => (
                   <div
                     key={event.id}
                     className="flex items-start gap-4 p-4 border border-border rounded-lg hover:bg-accent transition-colors"

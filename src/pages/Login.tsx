@@ -1,25 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { user, role, isLoading: authLoading } = useAuth();
-
-  // Redirect based on role when authenticated
-  useEffect(() => {
-    if (!authLoading && user && role) {
-      redirectBasedOnRole(role);
-    }
-  }, [user, role, authLoading]);
+  const [selectedRole, setSelectedRole] = useState<string>("");
 
   const redirectBasedOnRole = (userRole: string) => {
     switch (userRole) {
@@ -45,33 +37,24 @@ const Login = () => {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      toast.error(error.message);
+    // Basic validation
+    if (!email || !password) {
+      toast.error("Please enter email and password");
       setIsLoading(false);
       return;
     }
 
-    // Fetch user role and redirect
-    if (data.user) {
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .single();
-
-      if (roleData) {
-        toast.success("Login successful!");
-        redirectBasedOnRole(roleData.role);
-      } else {
-        toast.error("No role assigned. Please contact admin.");
-      }
+    if (!selectedRole) {
+      toast.error("Please select a role");
+      setIsLoading(false);
+      return;
     }
 
+    // Simulate login delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    toast.success("Login successful!");
+    redirectBasedOnRole(selectedRole);
     setIsLoading(false);
   };
 
@@ -107,6 +90,20 @@ const Login = () => {
                 placeholder="••••••••"
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select value={selectedRole} onValueChange={setSelectedRole} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Event Manager</SelectItem>
+                  <SelectItem value="stakeholder">Stakeholder</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>

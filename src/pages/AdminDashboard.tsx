@@ -1,33 +1,39 @@
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Plus, LogOut } from "lucide-react";
+import { Calendar, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useEvents } from "@/hooks/useEvents";
-import { useAuth } from "@/hooks/useAuth";
+import CreateEventDialog from "@/components/CreateEventDialog";
+
+// Mock events data
+const mockEvents = [
+  {
+    id: "1",
+    name: "Annual Tech Conference",
+    date: "2025-02-15",
+    venue: "Convention Center",
+    status: "pending",
+  },
+  {
+    id: "2",
+    name: "Product Launch Event",
+    date: "2025-03-01",
+    venue: "Grand Hotel Ballroom",
+    status: "in-progress",
+  },
+  {
+    id: "3",
+    name: "Team Building Retreat",
+    date: "2025-01-20",
+    venue: "Mountain Resort",
+    status: "completed",
+  },
+];
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { data: events, isLoading } = useEvents();
-  const { user, role, isLoading: authLoading } = useAuth();
 
-  // Protect route - only admins allowed
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/login");
-      } else if (role && role !== "admin") {
-        // Redirect to appropriate dashboard based on role
-        if (role === "manager") navigate("/event-manager");
-        else if (role === "stakeholder") navigate("/stakeholder");
-      }
-    }
-  }, [user, role, authLoading, navigate]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
     navigate("/login");
   };
 
@@ -43,14 +49,6 @@ const AdminDashboard = () => {
         return "bg-muted text-muted-foreground";
     }
   };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,13 +72,13 @@ const AdminDashboard = () => {
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">{events?.length || 0}</CardTitle>
+              <CardTitle className="text-2xl">{mockEvents.length}</CardTitle>
               <CardDescription>Total Events</CardDescription>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">{events?.filter(e => e.status === 'completed').length || 0}</CardTitle>
+              <CardTitle className="text-2xl">{mockEvents.filter(e => e.status === 'completed').length}</CardTitle>
               <CardDescription>Completed Events</CardDescription>
             </CardHeader>
           </Card>
@@ -88,10 +86,7 @@ const AdminDashboard = () => {
 
         {/* Actions */}
         <div className="flex flex-wrap gap-4 mb-8">
-          <Button onClick={() => navigate("/admin/create-event")}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Event
-          </Button>
+          <CreateEventDialog />
         </div>
 
         {/* Events Table */}
@@ -101,35 +96,29 @@ const AdminDashboard = () => {
             <CardDescription>Manage and monitor all events</CardDescription>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <p className="text-muted-foreground">Loading events...</p>
-            ) : events && events.length > 0 ? (
-              <div className="space-y-4">
-                {events.map((event) => (
-                  <div
-                    key={event.id}
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
-                  >
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">{event.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(event.date).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">📍 {event.venue}</p>
-                    </div>
-                    <Badge className={getStatusColor(event.status)}>
-                      {event.status.replace("-", " ")}
-                    </Badge>
+            <div className="space-y-4">
+              {mockEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                >
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground">{event.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(event.date).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">📍 {event.venue}</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">No events yet. Create your first event!</p>
-            )}
+                  <Badge className={getStatusColor(event.status)}>
+                    {event.status.replace("-", " ")}
+                  </Badge>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
