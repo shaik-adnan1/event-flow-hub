@@ -7,7 +7,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
-// CreateEvent is now a dialog component, not a separate page
+import EventDetails from "./pages/EventDetails";
 import EventManagerDashboard from "./pages/EventManagerDashboard";
 import StakeholderDashboard from "./pages/StakeholderDashboard";
 import NotFound from "./pages/NotFound";
@@ -25,7 +25,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/admin" element={<AdminDashboard />} />
-          {/* Create event is now a dialog in AdminDashboard */}
+          <Route path="/admin/events/:eventId" element={<EventDetails />} />
           <Route path="/event-manager" element={<EventManagerDashboard />} />
           <Route path="/stakeholder" element={<StakeholderDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
