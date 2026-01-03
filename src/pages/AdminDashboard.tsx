@@ -161,10 +161,11 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {events.map((event) => (
+            {events.map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                  className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                  onClick={() => navigate(`/admin/events/${event.id}`)}
                 >
                   <div className="flex-1">
                     <h3 className="font-semibold text-foreground">{event.name}</h3>
@@ -182,10 +183,10 @@ const AdminDashboard = () => {
                     <Badge className={getStatusColor(event.status)}>
                       {event.status.replace("-", " ")}
                     </Badge>
-                    <Button variant="ghost" size="icon" onClick={() => handleEdit(event)}>
+                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleEdit(event); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(event)}>
+                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDelete(event); }}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
