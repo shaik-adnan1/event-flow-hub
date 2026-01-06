@@ -195,6 +195,33 @@ const CreateEventDialog = ({ onEventCreated }: CreateEventDialogProps) => {
               Cancel
             </Button>
           </div>
+
+          {/* Suggestions Section */}
+          <div className="border-t pt-4 mt-2">
+            <p className="text-sm font-medium text-muted-foreground mb-3">💡 Quick Tips</p>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                <span>Choose a descriptive event name that clearly identifies the occasion</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                <span>Set the date at least 2 weeks in advance for better planning</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                <span>Include venue address details to help attendees locate the event</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                <span>Assign a manager early to ensure smooth event coordination</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                <span>Add a detailed description to give managers context about the event</span>
+              </li>
+            </ul>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
