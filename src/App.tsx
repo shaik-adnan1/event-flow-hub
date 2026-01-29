@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import MfaSelect from "./pages/MfaSelect";
+import MfaVerify from "./pages/MfaVerify";
 import AdminDashboard from "./pages/AdminDashboard";
 import EventDetails from "./pages/EventDetails";
 import EventManagerDashboard from "./pages/EventManagerDashboard";
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/mfa" element={<MfaSelect />} />
+          <Route path="/mfa/verify" element={<MfaVerify />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/events/:eventId" element={<EventDetails />} />
           <Route path="/event-manager" element={<EventManagerDashboard />} />
