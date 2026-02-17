@@ -135,6 +135,7 @@ const AdminDashboard = () => {
 
   // Accordion grouping
   const ongoingEvents = filteredEvents.filter(e => e.status === "in-progress");
+  const completedEvents = filteredEvents.filter(e => e.status === "completed");
   const upcomingEvents = filteredEvents.filter(e => e.status !== "deleted");
   const deletedEvents = filteredEvents.filter(e => e.status === "deleted");
 
@@ -327,6 +328,23 @@ const AdminDashboard = () => {
                   <div className="space-y-3 pb-2">{paginatedUpcoming.map(renderEventRow)}</div>
                   {renderPagination()}
                 </>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Completed Events */}
+          <AccordionItem value="completed" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-foreground">Completed Events</span>
+                <Badge className="bg-green-500/10 text-green-600 dark:text-green-400">{completedEvents.length}</Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {completedEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">No completed events.</p>
+              ) : (
+                <div className="space-y-3 pb-2">{completedEvents.map(renderEventRow)}</div>
               )}
             </AccordionContent>
           </AccordionItem>
