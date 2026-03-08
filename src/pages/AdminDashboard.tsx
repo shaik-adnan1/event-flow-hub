@@ -151,13 +151,16 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   };
 
-  const renderEventRow = (event: Event) => (
+  const renderEventRow = (event: Event, index: number) => (
     <div
       key={event.id}
       className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer"
       onClick={() => navigate(`/admin/events/${event.id}`)}
     >
       <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded w-fit">{index}</span>
+        </div>
         <h3 className="font-semibold text-foreground">{event.name}</h3>
         <p className="text-sm text-muted-foreground">
           {new Date(event.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
