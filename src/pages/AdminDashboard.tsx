@@ -310,7 +310,7 @@ const AdminDashboard = () => {
               {ongoingEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">No ongoing events found.</p>
               ) : (
-                <div className="space-y-3 pb-2">{ongoingEvents.map(renderEventRow)}</div>
+                <div className="space-y-3 pb-2">{ongoingEvents.map((event, idx) => renderEventRow(event, idx + 1))}</div>
               )}
             </AccordionContent>
           </AccordionItem>
