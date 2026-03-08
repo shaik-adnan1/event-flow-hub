@@ -328,7 +328,7 @@ const AdminDashboard = () => {
                 <p className="text-sm text-muted-foreground py-4">No upcoming events found.</p>
               ) : (
                 <>
-                  <div className="space-y-3 pb-2">{paginatedUpcoming.map(renderEventRow)}</div>
+                  <div className="space-y-3 pb-2">{paginatedUpcoming.map((event, idx) => renderEventRow(event, (currentPage - 1) * ITEMS_PER_PAGE + idx + 1))}</div>
                   {renderPagination()}
                 </>
               )}
