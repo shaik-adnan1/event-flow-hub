@@ -347,7 +347,7 @@ const AdminDashboard = () => {
               {completedEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">No completed events.</p>
               ) : (
-                <div className="space-y-3 pb-2">{completedEvents.map(renderEventRow)}</div>
+                <div className="space-y-3 pb-2">{completedEvents.map((event, idx) => renderEventRow(event, idx + 1))}</div>
               )}
             </AccordionContent>
           </AccordionItem>
