@@ -364,7 +364,7 @@ const AdminDashboard = () => {
               {deletedEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">No deleted events.</p>
               ) : (
-                <div className="space-y-3 pb-2">{deletedEvents.map(renderEventRow)}</div>
+                <div className="space-y-3 pb-2">{deletedEvents.map((event, idx) => renderEventRow(event, idx + 1))}</div>
               )}
             </AccordionContent>
           </AccordionItem>
