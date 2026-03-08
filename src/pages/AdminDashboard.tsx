@@ -151,13 +151,16 @@ const AdminDashboard = () => {
     setCurrentPage(1);
   };
 
-  const renderEventRow = (event: Event) => (
+  const renderEventRow = (event: Event, index: number) => (
     <div
       key={event.id}
       className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors cursor-pointer"
       onClick={() => navigate(`/admin/events/${event.id}`)}
     >
       <div className="flex-1">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded w-fit">{index}</span>
+        </div>
         <h3 className="font-semibold text-foreground">{event.name}</h3>
         <p className="text-sm text-muted-foreground">
           {new Date(event.date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
@@ -307,7 +310,7 @@ const AdminDashboard = () => {
               {ongoingEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">No ongoing events found.</p>
               ) : (
-                <div className="space-y-3 pb-2">{ongoingEvents.map(renderEventRow)}</div>
+                <div className="space-y-3 pb-2">{ongoingEvents.map((event, idx) => renderEventRow(event, idx + 1))}</div>
               )}
             </AccordionContent>
           </AccordionItem>
@@ -325,7 +328,7 @@ const AdminDashboard = () => {
                 <p className="text-sm text-muted-foreground py-4">No upcoming events found.</p>
               ) : (
                 <>
-                  <div className="space-y-3 pb-2">{paginatedUpcoming.map(renderEventRow)}</div>
+                  <div className="space-y-3 pb-2">{paginatedUpcoming.map((event, idx) => renderEventRow(event, (currentPage - 1) * ITEMS_PER_PAGE + idx + 1))}</div>
                   {renderPagination()}
                 </>
               )}
@@ -344,7 +347,7 @@ const AdminDashboard = () => {
               {completedEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">No completed events.</p>
               ) : (
-                <div className="space-y-3 pb-2">{completedEvents.map(renderEventRow)}</div>
+                <div className="space-y-3 pb-2">{completedEvents.map((event, idx) => renderEventRow(event, idx + 1))}</div>
               )}
             </AccordionContent>
           </AccordionItem>
@@ -361,7 +364,7 @@ const AdminDashboard = () => {
               {deletedEvents.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4">No deleted events.</p>
               ) : (
-                <div className="space-y-3 pb-2">{deletedEvents.map(renderEventRow)}</div>
+                <div className="space-y-3 pb-2">{deletedEvents.map((event, idx) => renderEventRow(event, idx + 1))}</div>
               )}
             </AccordionContent>
           </AccordionItem>
