@@ -7,13 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-
-// Mock managers data
-const mockManagers = [
-  { id: "1", name: "John Smith" },
-  { id: "2", name: "Sarah Johnson" },
-  { id: "3", name: "Michael Brown" },
-];
+import { useManagers } from "@/hooks/useManagers";
+import { useQualityEngineers } from "@/hooks/useQualityEngineers";
 
 interface CreateEventDialogProps {
   onEventCreated?: () => void;
@@ -23,7 +18,10 @@ const CreateEventDialog = ({ onEventCreated }: CreateEventDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedManager, setSelectedManager] = useState<string>("");
+  const [selectedQE, setSelectedQE] = useState<string>("");
   const [assignmentMode, setAssignmentMode] = useState<string>("now");
+  const { data: managers } = useManagers();
+  const { data: qualityEngineers } = useQualityEngineers();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,6 +37,7 @@ const CreateEventDialog = ({ onEventCreated }: CreateEventDialogProps) => {
     setIsSubmitting(false);
     setOpen(false);
     setSelectedManager("");
+    setSelectedQE("");
     setAssignmentMode("now");
     onEventCreated?.();
   };
@@ -152,22 +151,41 @@ const CreateEventDialog = ({ onEventCreated }: CreateEventDialogProps) => {
 
           {/* Assign Event Manager - only show if assign now */}
           {assignmentMode === "now" && (
-            <div className="space-y-2">
-              <Label htmlFor="manager">Assign Event Manager</Label>
-              <Select value={selectedManager} onValueChange={setSelectedManager}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select event manager" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No manager assigned</SelectItem>
-                  {mockManagers.map((manager) => (
-                    <SelectItem key={manager.id} value={manager.id}>
-                      {manager.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="manager">Assign Event Manager</Label>
+                <Select value={selectedManager} onValueChange={setSelectedManager}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select event manager" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No manager assigned</SelectItem>
+                    {managers?.map((manager) => (
+                      <SelectItem key={manager.user_id} value={manager.user_id}>
+                        {manager.full_name || manager.email || "Unnamed"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="qe">Assign Quality Engineer</Label>
+                <Select value={selectedQE} onValueChange={setSelectedQE}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select quality engineer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No QE assigned</SelectItem>
+                    {qualityEngineers?.map((qe) => (
+                      <SelectItem key={qe.user_id} value={qe.user_id}>
+                        {qe.full_name || qe.email || "Unnamed"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
           )}
 
           {/* Description */}

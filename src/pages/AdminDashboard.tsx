@@ -2,12 +2,16 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, LogOut, Pencil, Trash2, Search, Filter } from "lucide-react";
+import { Calendar, LogOut, Pencil, Trash2, Search, Filter, Bug } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import CreateEventDialog from "@/components/CreateEventDialog";
 import ManageManagersDialog from "@/components/ManageManagersDialog";
 import EditEventDialog from "@/components/EditEventDialog";
+import BugDetailsDialog from "@/components/BugDetailsDialog";
+import { useAllBugs, useUpdateBugStatus } from "@/hooks/useBugs";
+import { useAuth } from "@/hooks/useAuth";
+import NotificationBell from "@/components/NotificationBell";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -77,6 +81,7 @@ const ITEMS_PER_PAGE = 8;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>(generateDummyEvents);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -86,6 +91,10 @@ const AdminDashboard = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedBug, setSelectedBug] = useState<any>(null);
+  const [bugDialogOpen, setBugDialogOpen] = useState(false);
+  const { data: allBugs } = useAllBugs();
+  const updateBugStatus = useUpdateBugStatus();
 
   const handleLogout = () => navigate("/login");
 
@@ -225,10 +234,13 @@ const AdminDashboard = () => {
             <h1 className="text-xl font-bold text-foreground">EventFlow Admin</h1>
             <Badge variant="secondary" className="ml-2">Admin</Badge>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            {user && <NotificationBell userId={user.id} />}
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -368,10 +380,68 @@ const AdminDashboard = () => {
               )}
             </AccordionContent>
           </AccordionItem>
+
+          {/* Bugs / Defects */}
+          <AccordionItem value="bugs" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Bug className="h-5 w-5" />
+                <span className="font-semibold text-foreground">Bugs / Defects</span>
+                <Badge className="bg-destructive/10 text-destructive">{allBugs?.length || 0}</Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {!allBugs || allBugs.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">No bugs reported.</p>
+              ) : (
+                <div className="space-y-3 pb-2">
+                  {allBugs.map((bug: any) => (
+                    <div
+                      key={bug.id}
+                      className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                      onClick={() => { setSelectedBug(bug); setBugDialogOpen(true); }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Bug className="h-4 w-4 text-destructive" />
+                        <div>
+                          <p className="font-mono text-sm font-semibold text-primary">{bug.bug_number}</p>
+                          <p className="text-sm text-foreground line-clamp-1">{bug.description}</p>
+                          <p className="text-xs text-muted-foreground">{new Date(bug.created_at).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <Badge className={
+                        bug.status === "open" ? "bg-destructive/10 text-destructive" :
+                        bug.status === "closed" ? "bg-muted text-muted-foreground" :
+                        bug.status === "resolved" ? "bg-green-500/10 text-green-600" :
+                        "bg-yellow-500/10 text-yellow-600"
+                      }>
+                        {bug.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </div>
 
       <EditEventDialog event={selectedEvent} open={editDialogOpen} onOpenChange={setEditDialogOpen} onEventUpdated={handleEventUpdated} />
+
+      {selectedBug && (
+        <BugDetailsDialog
+          bug={selectedBug}
+          open={bugDialogOpen}
+          onOpenChange={setBugDialogOpen}
+          userId={user?.id || ""}
+          canClose={true}
+          onStatusChange={(bugId, status) => {
+            updateBugStatus.mutate({ bugId, status });
+            setBugDialogOpen(false);
+            toast.success(`Bug ${status}`);
+          }}
+        />
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

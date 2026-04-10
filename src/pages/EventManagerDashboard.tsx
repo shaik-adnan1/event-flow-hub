@@ -2,10 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle, Clock, AlertCircle, LogOut } from "lucide-react";
+import { Calendar, CheckCircle, Clock, AlertCircle, LogOut, Bug } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ManageEventDialog from "@/components/ManageEventDialog";
-
+import { useAuth } from "@/hooks/useAuth";
+import { useAllBugs } from "@/hooks/useBugs";
+import BugDetailsDialog from "@/components/BugDetailsDialog";
+import NotificationBell from "@/components/NotificationBell";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { supabase } from "@/integrations/supabase/client";
 interface Event {
   id: string;
   name: string;
@@ -46,11 +51,16 @@ const initialEvents: Event[] = [
 
 const EventManagerDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedBug, setSelectedBug] = useState<any>(null);
+  const [bugDialogOpen, setBugDialogOpen] = useState(false);
+  const { data: allBugs } = useAllBugs();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate("/login");
   };
 
@@ -108,10 +118,13 @@ const EventManagerDashboard = () => {
             <h1 className="text-xl font-bold text-foreground">Event Manager Dashboard</h1>
             <Badge variant="secondary" className="ml-2">Manager</Badge>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            {user && <NotificationBell userId={user.id} />}
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -194,6 +207,49 @@ const EventManagerDashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Bugs Section */}
+        <Accordion type="multiple" className="mt-6">
+          <AccordionItem value="bugs" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-2">
+                <Bug className="h-5 w-5" />
+                <span className="font-semibold text-foreground">Bugs / Defects</span>
+                <Badge className="bg-destructive/10 text-destructive">{allBugs?.length || 0}</Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              {!allBugs || allBugs.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4">No bugs reported.</p>
+              ) : (
+                <div className="space-y-3 pb-2">
+                  {allBugs.map((bug: any) => (
+                    <div
+                      key={bug.id}
+                      className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                      onClick={() => { setSelectedBug(bug); setBugDialogOpen(true); }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Bug className="h-4 w-4 text-destructive" />
+                        <div>
+                          <p className="font-mono text-sm font-semibold text-primary">{bug.bug_number}</p>
+                          <p className="text-sm text-foreground line-clamp-1">{bug.description}</p>
+                        </div>
+                      </div>
+                      <Badge className={
+                        bug.status === "open" ? "bg-destructive/10 text-destructive" :
+                        bug.status === "closed" ? "bg-muted text-muted-foreground" :
+                        "bg-yellow-500/10 text-yellow-600"
+                      }>
+                        {bug.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
       {/* Manage Event Dialog */}
@@ -203,6 +259,15 @@ const EventManagerDashboard = () => {
           open={manageDialogOpen}
           onOpenChange={setManageDialogOpen}
           onEventUpdate={handleEventUpdate}
+        />
+      )}
+
+      {selectedBug && (
+        <BugDetailsDialog
+          bug={selectedBug}
+          open={bugDialogOpen}
+          onOpenChange={setBugDialogOpen}
+          userId={user?.id || ""}
         />
       )}
     </div>
