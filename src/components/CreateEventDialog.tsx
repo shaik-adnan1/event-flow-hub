@@ -7,13 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
-
-// Mock managers data
-const mockManagers = [
-  { id: "1", name: "John Smith" },
-  { id: "2", name: "Sarah Johnson" },
-  { id: "3", name: "Michael Brown" },
-];
+import { useManagers } from "@/hooks/useManagers";
+import { useQualityEngineers } from "@/hooks/useQualityEngineers";
 
 interface CreateEventDialogProps {
   onEventCreated?: () => void;
@@ -23,7 +18,10 @@ const CreateEventDialog = ({ onEventCreated }: CreateEventDialogProps) => {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedManager, setSelectedManager] = useState<string>("");
+  const [selectedQE, setSelectedQE] = useState<string>("");
   const [assignmentMode, setAssignmentMode] = useState<string>("now");
+  const { data: managers } = useManagers();
+  const { data: qualityEngineers } = useQualityEngineers();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
