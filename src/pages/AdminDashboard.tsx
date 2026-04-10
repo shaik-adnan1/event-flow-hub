@@ -81,6 +81,7 @@ const ITEMS_PER_PAGE = 8;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>(generateDummyEvents);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -90,6 +91,10 @@ const AdminDashboard = () => {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedBug, setSelectedBug] = useState<any>(null);
+  const [bugDialogOpen, setBugDialogOpen] = useState(false);
+  const { data: allBugs } = useAllBugs();
+  const updateBugStatus = useUpdateBugStatus();
 
   const handleLogout = () => navigate("/login");
 
@@ -229,11 +234,13 @@ const AdminDashboard = () => {
             <h1 className="text-xl font-bold text-foreground">EventFlow Admin</h1>
             <Badge variant="secondary" className="ml-2">Admin</Badge>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Logout
-          </Button>
-        </div>
+          <div className="flex items-center gap-2">
+            {user && <NotificationBell userId={user.id} />}
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
