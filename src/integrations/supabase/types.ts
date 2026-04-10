@@ -14,9 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      bug_comments: {
+        Row: {
+          bug_id: string
+          comment: string
+          created_at: string
+          id: string
+          photo_url: string | null
+          user_id: string
+        }
+        Insert: {
+          bug_id: string
+          comment: string
+          created_at?: string
+          id?: string
+          photo_url?: string | null
+          user_id: string
+        }
+        Update: {
+          bug_id?: string
+          comment?: string
+          created_at?: string
+          id?: string
+          photo_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_comments_bug_id_fkey"
+            columns: ["bug_id"]
+            isOneToOne: false
+            referencedRelation: "bugs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bugs: {
+        Row: {
+          bug_number: string
+          created_at: string
+          description: string
+          event_id: string
+          id: string
+          photo_url: string | null
+          raised_by: string
+          status: string
+          task_id: string
+          updated_at: string
+        }
+        Insert: {
+          bug_number?: string
+          created_at?: string
+          description: string
+          event_id: string
+          id?: string
+          photo_url?: string | null
+          raised_by: string
+          status?: string
+          task_id: string
+          updated_at?: string
+        }
+        Update: {
+          bug_number?: string
+          created_at?: string
+          description?: string
+          event_id?: string
+          id?: string
+          photo_url?: string | null
+          raised_by?: string
+          status?: string
+          task_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bugs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bugs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           assigned_manager_id: string | null
+          assigned_qe_id: string | null
           attendee_count: number
           created_at: string
           date: string
@@ -31,6 +121,7 @@ export type Database = {
         }
         Insert: {
           assigned_manager_id?: string | null
+          assigned_qe_id?: string | null
           attendee_count: number
           created_at?: string
           date: string
@@ -45,6 +136,7 @@ export type Database = {
         }
         Update: {
           assigned_manager_id?: string | null
+          assigned_qe_id?: string | null
           attendee_count?: number
           created_at?: string
           date?: string
@@ -59,11 +151,69 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "events_assigned_qe_id_fkey"
+            columns: ["assigned_qe_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "fk_assigned_manager"
             columns: ["assigned_manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_bug_id: string | null
+          related_event_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_bug_id?: string | null
+          related_event_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_bug_id?: string | null
+          related_event_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_bug_id_fkey"
+            columns: ["related_bug_id"]
+            isOneToOne: false
+            referencedRelation: "bugs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_event_id_fkey"
+            columns: ["related_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -93,6 +243,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tasks: {
+        Row: {
+          assigned_to_name: string | null
+          assigned_to_user_id: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          event_id: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_name?: string | null
+          assigned_to_user_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          event_id: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_name?: string | null
+          assigned_to_user_id?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          event_id?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_to_user_id_fkey"
+            columns: ["assigned_to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "tasks_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -133,7 +337,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "manager" | "stakeholder"
+      app_role: "admin" | "manager" | "stakeholder" | "quality_engineer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -261,7 +465,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "manager", "stakeholder"],
+      app_role: ["admin", "manager", "stakeholder", "quality_engineer"],
     },
   },
 } as const
