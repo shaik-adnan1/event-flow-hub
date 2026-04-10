@@ -2,10 +2,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, CheckCircle, Clock, AlertCircle, LogOut } from "lucide-react";
+import { Calendar, CheckCircle, Clock, AlertCircle, LogOut, Bug } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ManageEventDialog from "@/components/ManageEventDialog";
-
+import { useAuth } from "@/hooks/useAuth";
+import { useAllBugs } from "@/hooks/useBugs";
+import BugDetailsDialog from "@/components/BugDetailsDialog";
+import NotificationBell from "@/components/NotificationBell";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { supabase } from "@/integrations/supabase/client";
 interface Event {
   id: string;
   name: string;
@@ -46,11 +51,16 @@ const initialEvents: Event[] = [
 
 const EventManagerDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [manageDialogOpen, setManageDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedBug, setSelectedBug] = useState<any>(null);
+  const [bugDialogOpen, setBugDialogOpen] = useState(false);
+  const { data: allBugs } = useAllBugs();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate("/login");
   };
 
