@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useTasks } from "@/hooks/useTasks";
+import CreateTaskDialog from "@/components/CreateTaskDialog";
 import {
   ArrowLeft,
   Calendar,
@@ -20,7 +23,8 @@ import {
   AlertCircle,
   Timer,
   Hash,
-} from "lucide-react";
+  ListTodo,
+}  from "lucide-react";
 import { toast } from "sonner";
 import EditEventDialog from "@/components/EditEventDialog";
 import {
