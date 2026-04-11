@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-type AppRole = "admin" | "manager" | "stakeholder";
+type AppRole = "admin" | "manager" | "stakeholder" | "quality_engineer";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -131,6 +131,7 @@ const Signup = () => {
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="manager">Event Manager</SelectItem>
                   <SelectItem value="stakeholder">Stakeholder</SelectItem>
+                  <SelectItem value="quality_engineer">Quality Engineer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
