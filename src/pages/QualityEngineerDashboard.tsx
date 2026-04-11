@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, LogOut, Bug, CheckCircle, Clock, AlertCircle, Shield } from "lucide-react";
+import { Calendar, LogOut, Bug, Shield, MapPin, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEvents } from "@/hooks/useEvents";
-import { useTasks } from "@/hooks/useTasks";
 import { useBugs } from "@/hooks/useBugs";
-import RaiseBugDialog from "@/components/RaiseBugDialog";
+import { useAllTasks } from "@/hooks/useTasks";
 import BugDetailsDialog from "@/components/BugDetailsDialog";
 import NotificationBell from "@/components/NotificationBell";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -18,58 +17,44 @@ const QualityEngineerDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: allEvents } = useEvents();
+  const { data: allTasks } = useAllTasks();
   const [selectedBug, setSelectedBug] = useState<any>(null);
   const [bugDialogOpen, setBugDialogOpen] = useState(false);
 
-  // Filter events assigned to this QE
   const myEvents = allEvents?.filter((e: any) => e.assigned_qe_id === user?.id) || [];
-  const selectedEventId = myEvents.length > 0 ? myEvents[0]?.id : undefined;
 
-  // Get tasks and bugs for the first assigned event (or all)
-  const { data: tasks } = useTasks(selectedEventId);
-  const { data: bugs } = useBugs(selectedEventId);
+  // Collect all bugs for all assigned events
+  const myEventIds = myEvents.map((e: any) => e.id);
+
+  // We need bugs for all events — fetch all and filter
+  const { data: allBugsRaw } = useBugsForEvents(myEventIds);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
   };
 
-  const getTaskStatusIcon = (status: string) => {
-    switch (status) {
-      case "not-started": return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
-      case "in-progress": return <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
-      case "completed": return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
-      default: return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
-
-  const getTaskStatusColor = (status: string) => {
-    switch (status) {
-      case "not-started": return "bg-muted text-muted-foreground";
-      case "in-progress": return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
-      case "completed": return "bg-green-500/10 text-green-600 dark:text-green-400";
-      default: return "bg-muted text-muted-foreground";
-    }
-  };
-
   const getBugStatusColor = (status: string) => {
     switch (status) {
       case "open": return "bg-destructive/10 text-destructive";
-      case "in-progress": return "bg-yellow-500/10 text-yellow-600";
-      case "resolved": return "bg-green-500/10 text-green-600";
+      case "in-progress": return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+      case "resolved": return "bg-green-500/10 text-green-600 dark:text-green-400";
       case "closed": return "bg-muted text-muted-foreground";
       default: return "bg-muted text-muted-foreground";
     }
   };
 
-  const taskStats = {
-    total: tasks?.length || 0,
-    completed: tasks?.filter((t: any) => t.status === "completed").length || 0,
-    inProgress: tasks?.filter((t: any) => t.status === "in-progress").length || 0,
-    notStarted: tasks?.filter((t: any) => t.status === "not-started").length || 0,
+  const getEventBugs = (eventId: string) => {
+    return allBugsRaw?.filter((b: any) => b.event_id === eventId) || [];
   };
 
-  const openBugs = bugs?.filter((b: any) => b.status === "open").length || 0;
+  const getTaskName = (taskId: string) => {
+    return allTasks?.find((t: any) => t.id === taskId)?.name || "—";
+  };
+
+  const getTaskAssignee = (taskId: string) => {
+    return allTasks?.find((t: any) => t.id === taskId)?.assigned_to_name || "Unassigned";
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,8 +76,8 @@ const QualityEngineerDashboard = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        {/* Summary stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-2xl">{myEvents.length}</CardTitle>
@@ -101,26 +86,24 @@ const QualityEngineerDashboard = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-2xl">{taskStats.total}</CardTitle>
-              <CardDescription>Total Tasks</CardDescription>
+              <CardTitle className="text-2xl">{allBugsRaw?.length || 0}</CardTitle>
+              <CardDescription>Total Bugs</CardDescription>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-2xl text-green-600 dark:text-green-400">{taskStats.completed}</CardTitle>
-              <CardDescription>Completed</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-2xl text-yellow-600 dark:text-yellow-400">{taskStats.inProgress}</CardTitle>
-              <CardDescription>In Progress</CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-2xl text-destructive">{openBugs}</CardTitle>
+              <CardTitle className="text-2xl text-destructive">
+                {allBugsRaw?.filter((b: any) => b.status === "open").length || 0}
+              </CardTitle>
               <CardDescription>Open Bugs</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-2xl text-green-600 dark:text-green-400">
+                {allBugsRaw?.filter((b: any) => b.status === "resolved").length || 0}
+              </CardTitle>
+              <CardDescription>Resolved</CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -134,116 +117,87 @@ const QualityEngineerDashboard = () => {
             </CardContent>
           </Card>
         ) : (
-          <Accordion type="multiple" defaultValue={["tasks", "bugs"]} className="space-y-4">
-            {/* My Events */}
-            <AccordionItem value="events" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  <span className="font-semibold">My Assigned Events</span>
-                  <Badge variant="secondary">{myEvents.length}</Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-3 pb-2">
-                  {myEvents.map((event: any) => (
-                    <div key={event.id} className="p-4 border border-border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-foreground">{event.name}</h3>
-                          <p className="text-sm text-muted-foreground">{event.type} • {new Date(event.date).toLocaleDateString()}</p>
-                          <p className="text-sm text-muted-foreground">📍 {event.venue}</p>
-                        </div>
-                        <Badge className={event.status === "in-progress" ? "bg-yellow-500/10 text-yellow-600" : "bg-muted text-muted-foreground"}>
-                          {event.status}
+          <div className="space-y-6">
+            {myEvents.map((event: any) => {
+              const eventBugs = getEventBugs(event.id);
+              return (
+                <Card key={event.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle className="text-lg">{event.name}</CardTitle>
+                        <CardDescription className="flex flex-col gap-1">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {new Date(event.date).toLocaleDateString("en-US", {
+                              year: "numeric", month: "long", day: "numeric",
+                            })}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {event.venue}
+                          </span>
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="gap-1">
+                          <Bug className="h-3 w-3" />
+                          {eventBugs.length} Bug{eventBugs.length !== 1 ? "s" : ""} Reported
                         </Badge>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => navigate(`/quality-engineer/create-defect/${event.id}`)}
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Create Bug / Defect
+                        </Button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                  </CardHeader>
 
-            {/* Tasks */}
-            <AccordionItem value="tasks" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-semibold">All Tasks</span>
-                  <Badge variant="secondary">{taskStats.total}</Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="flex justify-end mb-3">
-                  {selectedEventId && tasks && (
-                    <RaiseBugDialog
-                      eventId={selectedEventId}
-                      tasks={tasks.map((t: any) => ({ id: t.id, name: t.name, assigned_to_user_id: t.assigned_to_user_id, assigned_to_name: t.assigned_to_name }))}
-                      raisedBy={user?.id || ""}
-                    />
+                  {eventBugs.length > 0 && (
+                    <CardContent className="pt-0">
+                      <Accordion type="single" collapsible>
+                        <AccordionItem value="bugs" className="border-none">
+                          <AccordionTrigger className="hover:no-underline py-2 text-sm font-medium text-muted-foreground">
+                            View {eventBugs.length} Bug{eventBugs.length !== 1 ? "s" : ""}
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="rounded-lg border border-border overflow-hidden">
+                              {/* Table header */}
+                              <div className="grid grid-cols-[100px_1fr_1fr_1fr_100px_120px] gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                <span>Bug ID</span>
+                                <span>Bug Name</span>
+                                <span>Linked Task</span>
+                                <span>Assignee</span>
+                                <span>Status</span>
+                                <span>Date</span>
+                              </div>
+                              {eventBugs.map((bug: any) => (
+                                <div
+                                  key={bug.id}
+                                  className="grid grid-cols-[100px_1fr_1fr_1fr_100px_120px] gap-2 px-4 py-3 border-t border-border hover:bg-accent cursor-pointer transition-colors items-center"
+                                  onClick={() => { setSelectedBug(bug); setBugDialogOpen(true); }}
+                                >
+                                  <span className="font-mono text-sm font-semibold text-primary">{bug.bug_number}</span>
+                                  <span className="text-sm text-foreground truncate">{bug.bug_name || "—"}</span>
+                                  <span className="text-sm text-foreground truncate">{getTaskName(bug.task_id)}</span>
+                                  <span className="text-sm text-muted-foreground truncate">{getTaskAssignee(bug.task_id)}</span>
+                                  <Badge className={`${getBugStatusColor(bug.status)} text-xs`}>{bug.status}</Badge>
+                                  <span className="text-xs text-muted-foreground">{new Date(bug.created_at).toLocaleDateString()}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </CardContent>
                   )}
-                </div>
-                {!tasks || tasks.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">No tasks found.</p>
-                ) : (
-                  <div className="space-y-3 pb-2">
-                    {tasks.map((task: any, idx: number) => (
-                      <div key={task.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded">{idx + 1}</span>
-                          {getTaskStatusIcon(task.status)}
-                          <div>
-                            <p className="font-medium text-foreground">{task.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {task.assigned_to_name && `Assigned to: ${task.assigned_to_name}`}
-                              {task.due_date && ` • Due: ${new Date(task.due_date).toLocaleDateString()}`}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge className={getTaskStatusColor(task.status)}>{task.status.replace("-", " ")}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Bugs */}
-            <AccordionItem value="bugs" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Bug className="h-5 w-5" />
-                  <span className="font-semibold">Bugs Raised</span>
-                  <Badge className="bg-destructive/10 text-destructive">{bugs?.length || 0}</Badge>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                {!bugs || bugs.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-4 text-center">No bugs raised yet.</p>
-                ) : (
-                  <div className="space-y-3 pb-2">
-                    {bugs.map((bug: any) => (
-                      <div
-                        key={bug.id}
-                        className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                        onClick={() => { setSelectedBug(bug); setBugDialogOpen(true); }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Bug className="h-4 w-4 text-destructive" />
-                          <div>
-                            <p className="font-mono text-sm font-semibold text-primary">{bug.bug_number}</p>
-                            <p className="text-sm text-foreground line-clamp-1">{bug.description}</p>
-                            <p className="text-xs text-muted-foreground">{new Date(bug.created_at).toLocaleString()}</p>
-                          </div>
-                        </div>
-                        <Badge className={getBugStatusColor(bug.status)}>{bug.status}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+                </Card>
+              );
+            })}
+          </div>
         )}
       </div>
 
@@ -257,6 +211,25 @@ const QualityEngineerDashboard = () => {
       )}
     </div>
   );
+};
+
+// Custom hook to fetch bugs for multiple event IDs
+import { useQuery } from "@tanstack/react-query";
+const useBugsForEvents = (eventIds: string[]) => {
+  return useQuery({
+    queryKey: ["bugs_for_events", eventIds],
+    queryFn: async () => {
+      if (eventIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("bugs")
+        .select("*")
+        .in("event_id", eventIds)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: eventIds.length > 0,
+  });
 };
 
 export default QualityEngineerDashboard;
