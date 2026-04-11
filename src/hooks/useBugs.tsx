@@ -54,6 +54,7 @@ export const useCreateBug = () => {
       raised_by: string;
       description: string;
       photo_url?: string;
+      bug_name?: string;
     }) => {
       const { data, error } = await supabase.from("bugs").insert(bug).select().single();
       if (error) throw error;
