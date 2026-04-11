@@ -373,6 +373,9 @@ const EventDetails = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Tasks Section */}
+            <TasksSection eventId={event.id} />
           </div>
 
           {/* Right Column - Sidebar */}
