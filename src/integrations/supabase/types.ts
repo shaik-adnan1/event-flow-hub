@@ -51,6 +51,7 @@ export type Database = {
       }
       bugs: {
         Row: {
+          bug_name: string | null
           bug_number: string
           created_at: string
           description: string
@@ -63,6 +64,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bug_name?: string | null
           bug_number?: string
           created_at?: string
           description: string
@@ -75,6 +77,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bug_name?: string | null
           bug_number?: string
           created_at?: string
           description?: string
