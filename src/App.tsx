@@ -13,6 +13,7 @@ import EventDetails from "./pages/EventDetails";
 import EventManagerDashboard from "./pages/EventManagerDashboard";
 import StakeholderDashboard from "./pages/StakeholderDashboard";
 import QualityEngineerDashboard from "./pages/QualityEngineerDashboard";
+import CreateDefect from "./pages/CreateDefect";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/event-manager" element={<EventManagerDashboard />} />
           <Route path="/stakeholder" element={<StakeholderDashboard />} />
           <Route path="/quality-engineer" element={<QualityEngineerDashboard />} />
+          <Route path="/quality-engineer/create-defect/:eventId" element={<CreateDefect />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
