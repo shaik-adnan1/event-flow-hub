@@ -152,7 +152,62 @@ const getDaysUntil = (dateStr: string) => {
   return diff;
 };
 
-const EventDetails = () => {
+const getTaskStatusColor = (status: string) => {
+  switch (status) {
+    case "not-started": return "bg-muted text-muted-foreground";
+    case "in-progress": return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
+    case "completed": return "bg-green-500/10 text-green-600 dark:text-green-400";
+    default: return "bg-muted text-muted-foreground";
+  }
+};
+
+const TasksSection = ({ eventId }: { eventId: string }) => {
+  const { data: tasks, refetch } = useTasks(eventId);
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <ListTodo className="h-5 w-5 text-muted-foreground" />
+            Tasks
+            <Badge variant="secondary" className="ml-1">{tasks?.length || 0}</Badge>
+          </CardTitle>
+          <CreateTaskDialog eventId={eventId} onTaskCreated={() => refetch()} />
+        </div>
+      </CardHeader>
+      <CardContent>
+        {!tasks || tasks.length === 0 ? (
+          <div className="text-center py-6">
+            <ListTodo className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">No tasks yet. Click "Add Task" to create one.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {tasks.map((task: any, idx: number) => (
+              <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">{idx + 1}</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{task.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {task.assigned_to_name || "Unassigned"}
+                      {task.due_date && ` • Due: ${new Date(task.due_date).toLocaleDateString()}`}
+                    </p>
+                  </div>
+                </div>
+                <Badge className={`${getTaskStatusColor(task.status)} text-xs shrink-0`}>
+                  {task.status.replace("-", " ")}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
