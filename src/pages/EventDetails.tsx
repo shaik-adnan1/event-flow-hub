@@ -208,6 +208,7 @@ const TasksSection = ({ eventId }: { eventId: string }) => {
   );
 };
 
+const EventDetails = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
