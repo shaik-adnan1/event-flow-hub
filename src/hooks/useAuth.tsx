@@ -59,13 +59,14 @@ export const useAuth = () => {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
+    // A user may have multiple roles (e.g. admin + quality_engineer for testing).
+    // Pick the highest-privilege role available.
     const { data, error } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", userId)
-      .single();
+      .eq("user_id", userId);
 
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
       setAuthState(prev => ({ ...prev, role: null, isLoading: false }));
       return;
     }
