@@ -1,32 +1,23 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, LogOut, Bug, Shield, MapPin, Plus } from "lucide-react";
+import { Calendar, LogOut, Bug, Shield, MapPin, ChevronRight, ListChecks, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEvents } from "@/hooks/useEvents";
-import { useBugs } from "@/hooks/useBugs";
 import { useAllTasks } from "@/hooks/useTasks";
-import BugDetailsDialog from "@/components/BugDetailsDialog";
 import NotificationBell from "@/components/NotificationBell";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const QualityEngineerDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: allEvents } = useEvents();
   const { data: allTasks } = useAllTasks();
-  const [selectedBug, setSelectedBug] = useState<any>(null);
-  const [bugDialogOpen, setBugDialogOpen] = useState(false);
 
   const myEvents = allEvents?.filter((e: any) => e.assigned_qe_id === user?.id) || [];
-
-  // Collect all bugs for all assigned events
   const myEventIds = myEvents.map((e: any) => e.id);
-
-  // We need bugs for all events — fetch all and filter
   const { data: allBugsRaw } = useBugsForEvents(myEventIds);
 
   const handleLogout = async () => {
@@ -34,27 +25,11 @@ const QualityEngineerDashboard = () => {
     navigate("/login");
   };
 
-  const getBugStatusColor = (status: string) => {
-    switch (status) {
-      case "open": return "bg-destructive/10 text-destructive";
-      case "in-progress": return "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400";
-      case "resolved": return "bg-green-500/10 text-green-600 dark:text-green-400";
-      case "closed": return "bg-muted text-muted-foreground";
-      default: return "bg-muted text-muted-foreground";
-    }
-  };
+  const getEventTaskCount = (eventId: string) =>
+    allTasks?.filter((t: any) => t.event_id === eventId).length || 0;
 
-  const getEventBugs = (eventId: string) => {
-    return allBugsRaw?.filter((b: any) => b.event_id === eventId) || [];
-  };
-
-  const getTaskName = (taskId: string) => {
-    return allTasks?.find((t: any) => t.id === taskId)?.name || "—";
-  };
-
-  const getTaskAssignee = (taskId: string) => {
-    return allTasks?.find((t: any) => t.id === taskId)?.assigned_to_name || "Unassigned";
-  };
+  const getEventBugCount = (eventId: string) =>
+    allBugsRaw?.filter((b: any) => b.event_id === eventId).length || 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,6 +61,14 @@ const QualityEngineerDashboard = () => {
           </Card>
           <Card>
             <CardHeader className="pb-2">
+              <CardTitle className="text-2xl">
+                {allTasks?.filter((t: any) => myEventIds.includes(t.event_id)).length || 0}
+              </CardTitle>
+              <CardDescription>Total Tasks</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
               <CardTitle className="text-2xl">{allBugsRaw?.length || 0}</CardTitle>
               <CardDescription>Total Bugs</CardDescription>
             </CardHeader>
@@ -98,15 +81,9 @@ const QualityEngineerDashboard = () => {
               <CardDescription>Open Bugs</CardDescription>
             </CardHeader>
           </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-2xl text-green-600 dark:text-green-400">
-                {allBugsRaw?.filter((b: any) => b.status === "resolved").length || 0}
-              </CardTitle>
-              <CardDescription>Resolved</CardDescription>
-            </CardHeader>
-          </Card>
         </div>
+
+        <h2 className="text-lg font-semibold text-foreground mb-4">Your Assigned Events</h2>
 
         {myEvents.length === 0 ? (
           <Card>
@@ -117,104 +94,66 @@ const QualityEngineerDashboard = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
-            {myEvents.map((event: any) => {
-              const eventBugs = getEventBugs(event.id);
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myEvents.map((event: any, idx: number) => {
+              const taskCount = getEventTaskCount(event.id);
+              const bugCount = getEventBugCount(event.id);
               return (
-                <Card key={event.id}>
+                <Card
+                  key={event.id}
+                  className="cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+                  onClick={() => navigate(`/quality-engineer/event/${event.id}`)}
+                >
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg">{event.name}</CardTitle>
-                        <CardDescription className="flex flex-col gap-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {new Date(event.date).toLocaleDateString("en-US", {
-                              year: "numeric", month: "long", day: "numeric",
-                            })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5" />
-                            {event.venue}
-                          </span>
-                        </CardDescription>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary/10 text-primary font-semibold text-sm flex items-center justify-center">
+                          {idx + 1}
+                        </div>
+                        <div className="space-y-1 min-w-0">
+                          <CardTitle className="text-lg truncate">{event.name}</CardTitle>
+                          <CardDescription className="space-y-1">
+                            <span className="flex items-center gap-1.5 text-xs">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {new Date(event.date).toLocaleDateString("en-US", {
+                                year: "numeric", month: "short", day: "numeric",
+                              })}
+                              <Clock className="h-3.5 w-3.5 ml-2" />
+                              {event.time}
+                            </span>
+                            <span className="flex items-center gap-1.5 text-xs">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {event.venue}
+                            </span>
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="outline" className="gap-1">
-                          <Bug className="h-3 w-3" />
-                          {eventBugs.length} Bug{eventBugs.length !== 1 ? "s" : ""} Reported
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => navigate(`/quality-engineer/create-defect/${event.id}`)}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Create Bug / Defect
-                        </Button>
-                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                     </div>
                   </CardHeader>
-
-                  {eventBugs.length > 0 && (
-                    <CardContent className="pt-0">
-                      <Accordion type="single" collapsible>
-                        <AccordionItem value="bugs" className="border-none">
-                          <AccordionTrigger className="hover:no-underline py-2 text-sm font-medium text-muted-foreground">
-                            View {eventBugs.length} Bug{eventBugs.length !== 1 ? "s" : ""}
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="rounded-lg border border-border overflow-hidden">
-                              {/* Table header */}
-                              <div className="grid grid-cols-[100px_1fr_1fr_1fr_100px_120px] gap-2 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                <span>Bug ID</span>
-                                <span>Bug Name</span>
-                                <span>Linked Task</span>
-                                <span>Assignee</span>
-                                <span>Status</span>
-                                <span>Date</span>
-                              </div>
-                              {eventBugs.map((bug: any) => (
-                                <div
-                                  key={bug.id}
-                                  className="grid grid-cols-[100px_1fr_1fr_1fr_100px_120px] gap-2 px-4 py-3 border-t border-border hover:bg-accent cursor-pointer transition-colors items-center"
-                                  onClick={() => { setSelectedBug(bug); setBugDialogOpen(true); }}
-                                >
-                                  <span className="font-mono text-sm font-semibold text-primary">{bug.bug_number}</span>
-                                  <span className="text-sm text-foreground truncate">{bug.bug_name || "—"}</span>
-                                  <span className="text-sm text-foreground truncate">{getTaskName(bug.task_id)}</span>
-                                  <span className="text-sm text-muted-foreground truncate">{getTaskAssignee(bug.task_id)}</span>
-                                  <Badge className={`${getBugStatusColor(bug.status)} text-xs`}>{bug.status}</Badge>
-                                  <span className="text-xs text-muted-foreground">{new Date(bug.created_at).toLocaleDateString()}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    </CardContent>
-                  )}
+                  <CardContent className="pt-0">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="outline" className="gap-1">
+                        <ListChecks className="h-3 w-3" />
+                        {taskCount} Task{taskCount !== 1 ? "s" : ""}
+                      </Badge>
+                      <Badge variant="outline" className="gap-1">
+                        <Bug className="h-3 w-3" />
+                        {bugCount} Bug{bugCount !== 1 ? "s" : ""}
+                      </Badge>
+                    </div>
+                  </CardContent>
                 </Card>
               );
             })}
           </div>
         )}
       </div>
-
-      {selectedBug && (
-        <BugDetailsDialog
-          bug={selectedBug}
-          open={bugDialogOpen}
-          onOpenChange={setBugDialogOpen}
-          userId={user?.id || ""}
-        />
-      )}
     </div>
   );
 };
 
 // Custom hook to fetch bugs for multiple event IDs
-import { useQuery } from "@tanstack/react-query";
 const useBugsForEvents = (eventIds: string[]) => {
   return useQuery({
     queryKey: ["bugs_for_events", eventIds],
