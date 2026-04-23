@@ -13,6 +13,8 @@ import EventDetails from "./pages/EventDetails";
 import EventManagerDashboard from "./pages/EventManagerDashboard";
 import StakeholderDashboard from "./pages/StakeholderDashboard";
 import QualityEngineerDashboard from "./pages/QualityEngineerDashboard";
+import QEEventTasks from "./pages/QEEventTasks";
+import QETaskDetails from "./pages/QETaskDetails";
 import CreateDefect from "./pages/CreateDefect";
 import NotFound from "./pages/NotFound";
 
@@ -35,6 +37,8 @@ const App = () => (
           <Route path="/event-manager" element={<EventManagerDashboard />} />
           <Route path="/stakeholder" element={<StakeholderDashboard />} />
           <Route path="/quality-engineer" element={<QualityEngineerDashboard />} />
+          <Route path="/quality-engineer/event/:eventId" element={<QEEventTasks />} />
+          <Route path="/quality-engineer/event/:eventId/task/:taskId" element={<QETaskDetails />} />
           <Route path="/quality-engineer/create-defect/:eventId" element={<CreateDefect />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

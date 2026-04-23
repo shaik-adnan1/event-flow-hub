@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Upload, X, Image as ImageIcon } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useTasks } from "@/hooks/useTasks";
@@ -19,6 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 const CreateDefect = () => {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId: string }>();
+  const [searchParams] = useSearchParams();
+  const preselectedTaskId = searchParams.get("taskId") || "";
   const { user } = useAuth();
   const { data: tasks } = useTasks(eventId);
   const createBug = useCreateBug();
@@ -33,6 +35,13 @@ const CreateDefect = () => {
   const [taskSearchOpen, setTaskSearchOpen] = useState(false);
   const [taskSearch, setTaskSearch] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+
+  // Pre-select the task if provided via ?taskId= (e.g. from task details page)
+  useEffect(() => {
+    if (preselectedTaskId && tasks?.some((t: any) => t.id === preselectedTaskId)) {
+      setSelectedTaskId(preselectedTaskId);
+    }
+  }, [preselectedTaskId, tasks]);
 
   const selectedTask = useMemo(
     () => tasks?.find((t: any) => t.id === selectedTaskId),
@@ -133,7 +142,11 @@ const CreateDefect = () => {
       }
 
       toast.success(`Defect ${bug.bug_number} created successfully!`);
-      navigate("/quality-engineer");
+      if (preselectedTaskId) {
+        navigate(`/quality-engineer/event/${eventId}/task/${preselectedTaskId}`);
+      } else {
+        navigate(`/quality-engineer/event/${eventId}`);
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to create defect");
     } finally {
@@ -145,7 +158,7 @@ const CreateDefect = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/quality-engineer")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
