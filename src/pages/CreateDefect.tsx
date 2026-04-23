@@ -142,7 +142,11 @@ const CreateDefect = () => {
       }
 
       toast.success(`Defect ${bug.bug_number} created successfully!`);
-      navigate("/quality-engineer");
+      if (preselectedTaskId) {
+        navigate(`/quality-engineer/event/${eventId}/task/${preselectedTaskId}`);
+      } else {
+        navigate(`/quality-engineer/event/${eventId}`);
+      }
     } catch (err: any) {
       toast.error(err.message || "Failed to create defect");
     } finally {
@@ -154,7 +158,7 @@ const CreateDefect = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/quality-engineer")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
