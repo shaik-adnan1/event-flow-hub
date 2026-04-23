@@ -36,6 +36,13 @@ const CreateDefect = () => {
   const [taskSearch, setTaskSearch] = useState("");
   const [isDragging, setIsDragging] = useState(false);
 
+  // Pre-select the task if provided via ?taskId= (e.g. from task details page)
+  useEffect(() => {
+    if (preselectedTaskId && tasks?.some((t: any) => t.id === preselectedTaskId)) {
+      setSelectedTaskId(preselectedTaskId);
+    }
+  }, [preselectedTaskId, tasks]);
+
   const selectedTask = useMemo(
     () => tasks?.find((t: any) => t.id === selectedTaskId),
     [tasks, selectedTaskId]
