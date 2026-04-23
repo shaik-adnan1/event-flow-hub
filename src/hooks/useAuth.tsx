@@ -71,12 +71,15 @@ export const useAuth = () => {
       return;
     }
 
+    const priority: AppRole[] = ["admin", "manager", "quality_engineer", "stakeholder"];
+    const roles = data.map(r => r.role as AppRole);
+    const chosen = priority.find(p => roles.includes(p)) ?? roles[0];
+
     setAuthState(prev => ({
       ...prev,
-      role: data.role as AppRole,
+      role: chosen,
       isLoading: false,
     }));
-  };
 
   return authState;
 };
