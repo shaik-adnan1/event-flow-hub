@@ -80,6 +80,7 @@ export const useAuth = () => {
       role: chosen,
       isLoading: false,
     }));
+  };
 
   return authState;
 };
